@@ -1,0 +1,13 @@
+com\Jose\sistemaingressos\ingressos\model\IngressoNormal.class
+com\Jose\sistemaingressos\ingressos\service\UsuarioService.class
+com\Jose\sistemaingressos\ingressos\controller\IngressoController.class
+com\Jose\sistemaingressos\ingressos\controller\UsuarioController.class
+com\Jose\sistemaingressos\ingressos\repository\IngressoRepository.class
+com\Jose\sistemaingressos\ingressos\model\EstadoIngresso.class
+com\Jose\sistemaingressos\ingressos\model\IngressoVIP.class
+com\Jose\sistemaingressos\ingressos\service\IngressoService.class
+com\Jose\sistemaingressos\ingressos\model\Ingresso.class
+com\Jose\sistemaingressos\ingressos\model\IngressoMeia.class
+com\Jose\sistemaingressos\ingressos\repository\UsuarioRepository.class
+com\Jose\sistemaingressos\ingressos\model\Usuario.class
+com\Jose\sistemaingressos\ingressos\SistemaIngressosApplication.class

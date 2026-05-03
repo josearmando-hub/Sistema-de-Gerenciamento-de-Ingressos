@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ingressos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<!-- ================= TELA DE LOGIN / CADASTRO ================= -->
+<div class="container mt-5" id="telaLogin">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white text-center">
+                    <h4>Acesso ao Sistema</h4>
+                </div>
+                <div class="card-body">
+                    <form id="formAcesso">
+                        <div class="mb-3">
+                            <label>E-mail</label>
+                            <input type="email" id="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Senha</label>
+                            <input type="password" id="senha" class="form-control" required>
+                        </div>
+                        <div class="mb-3" id="divNome" style="display: none;">
+                            <label>Nome Completo</label>
+                            <input type="text" id="nome" class="form-control">
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary" id="btnLogin" onclick="fazerLogin()">Entrar</button>
+                            <button type="button" class="btn btn-outline-success" id="btnCadastrar" onclick="mostrarCadastro()">Criar Conta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= TELA DO SISTEMA ================= -->
+<div class="container mt-4" id="telaSistema" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🎫 Sistema de Venda de Ingressos</h2>
+        <div>
+            <span class="me-3">Olá, <strong id="nomeUsuarioLogado"></strong>!</span>
+            <button class="btn btn-sm btn-danger" onclick="sair()">Sair</button>
+        </div>
+    </div>
+
+    <!-- Formulário de Compra -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Comprar Novo Ingresso</h5>
+        </div>
+        <div class="card-body">
+            <form id="formIngresso">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Nome do Evento</label>
+                        <input type="text" id="evento" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Data e Hora</label>
+                        <input type="datetime-local" id="dataEvento" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label>Valor Base (R$)</label>
+                        <input type="number" id="valorBase" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Tipo de Ingresso</label>
+                        <select id="tipo" class="form-select" onchange="mudarCamposDinamicos()">
+                            <option value="NORMAL">Normal</option>
+                            <option value="VIP">VIP</option>
+                            <option value="MEIA">Meia-Entrada</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos que aparecem de acordo com o Polimorfismo -->
+                    <div class="col-md-4" id="divTaxaVIP" style="display: none;">
+                        <label>Taxa VIP (R$)</label>
+                        <input type="number" id="taxaVIP" class="form-control" step="0.01">
+                    </div>
+                    <div class="col-md-4" id="divDescontoMeia" style="display: none;">
+                        <label>Desconto (%)</label>
+                        <input type="number" id="percentualDesconto" class="form-control" step="0.01">
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-success" onclick="cadastrarIngresso()">Confirmar Compra</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Meus Ingressos -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Meus Ingressos</h5>
+            <button class="btn btn-sm btn-light" onclick="carregarIngressos()">Atualizar Lista</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Evento</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>Valor Final</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+                <tbody id="tabelaIngressos">
+                <!-- Os ingressos aparecerão aqui -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // ===== LÓGICA DE AUTENTICAÇÃO (LOGIN) =====
+    // ==========================================
+    let isCadastro = false;
+
+    function mostrarCadastro() {
+        if (!isCadastro) {
+            document.getElementById("divNome").style.display = "block";
+            document.getElementById("btnLogin").style.display = "none";
+            document.getElementById("btnCadastrar").innerText = "Confirmar Cadastro";
+            document.getElementById("btnCadastrar").classList.replace("btn-outline-success", "btn-success");
+            isCadastro = true;
+        } else {
+            registrarUsuario();
+        }
+    }
+
+    async function registrarUsuario() {
+        const usuario = {
+            email: document.getElementById("email").value.trim(),
+            senha: document.getElementById("senha").value,
+            nome: document.getElementById("nome").value.trim()
+        };
+
+        const res = await fetch('/usuarios/cadastrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(usuario)
+        });
+
+        if (res.ok) {
+            alert("Cadastro realizado com sucesso! Agora faça o login.");
+            window.location.reload();
+        } else {
+            alert(await res.text());
+        }
+    }
+
+    async function fazerLogin() {
+        const credenciais = {
+            email: document.getElementById("email").value.trim(),
+            senha: document.getElementById("senha").value
+        };
+
+        const res = await fetch('/usuarios/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credenciais)
+        });
+
+        if (res.ok) {
+            const usuarioLogado = await res.json();
+            sessionStorage.setItem("usuarioId", usuarioLogado.id);
+            sessionStorage.setItem("usuarioNome", usuarioLogado.nome);
+            iniciarSistema();
+        } else {
+            alert(await res.text());
+        }
+    }
+
+    function sair() {
+        sessionStorage.clear();
+        window.location.reload();
+    }
+
+    function iniciarSistema() {
+        document.getElementById("telaLogin").style.display = "none";
+        document.getElementById("telaSistema").style.display = "block";
+        document.getElementById("nomeUsuarioLogado").innerText = sessionStorage.getItem("usuarioNome");
+        carregarIngressos();
+    }
+
+    window.onload = () => {
+        if (sessionStorage.getItem("usuarioId")) {
+            iniciarSistema();
+        }
+    };
+
+    // ==========================================
+    // ===== LÓGICA DE INGRESSOS (CRUD) =========
+    // ==========================================
+    function mudarCamposDinamicos() {
+        const tipo = document.getElementById("tipo").value;
+        document.getElementById("divTaxaVIP").style.display = tipo === "VIP" ? "block" : "none";
+        document.getElementById("divDescontoMeia").style.display = tipo === "MEIA" ? "block" : "none";
+    }
+
+    async function cadastrarIngresso() {
+        const tipo = document.getElementById("tipo").value;
+
+        const ingresso = {
+            usuarioId: sessionStorage.getItem("usuarioId"),
+            tipo: tipo,
+            evento: document.getElementById("evento").value,
+            dataEvento: document.getElementById("dataEvento").value,
+            valorBase: parseFloat(document.getElementById("valorBase").value)
+        };
+
+        if (tipo === "VIP") ingresso.taxaVIP = parseFloat(document.getElementById("taxaVIP").value || 0);
+        if (tipo === "MEIA") ingresso.percentualDesconto = parseFloat(document.getElementById("percentualDesconto").value || 0);
+
+        const resposta = await fetch('/ingressos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ingresso)
+        });
+
+        if (resposta.ok) {
+            alert("Ingresso comprado com sucesso!");
+            document.getElementById("formIngresso").reset();
+            mudarCamposDinamicos();
+            carregarIngressos();
+        } else {
+            alert("Erro ao comprar ingresso.");
+        }
+    }
+
+    async function carregarIngressos() {
+        const usuarioId = sessionStorage.getItem("usuarioId");
+
+        const resposta = await fetch(`/ingressos/usuario/${usuarioId}`);
+        const ingressos = await resposta.json();
+
+        const tbody = document.getElementById("tabelaIngressos");
+        tbody.innerHTML = "";
+
+        for (const ing of ingressos) {
+            const respostaValor = await fetch(`/ingressos/${ing.id}/valor`);
+            const valorFinal = await respostaValor.json();
+
+            // Lógica para desenhar os botões de Cancelar e Devolver
+            let botoesAcao = "";
+            if (ing.estado !== "CANCELADO" && ing.estado !== "DEVOLVIDO") {
+                botoesAcao = `
+                    <button class="btn btn-sm btn-outline-danger me-1" onclick="solicitarCancelamento('${ing.id}')">Cancelar</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="solicitarDevolucao('${ing.id}')">Devolver</button>
+                `;
+            }
+
+            // Lógica para colorir a tag de Status
+            let corStatus = "bg-success";
+            if (ing.estado === "CANCELADO") corStatus = "bg-danger";
+            if (ing.estado === "DEVOLVIDO") corStatus = "bg-secondary";
+            if (ing.estado === "EMITIDO" || ing.estado === "PAGO") corStatus = "bg-success";
+
+            const linha = `
+                <tr>
+                    <td>${ing.evento}</td>
+                    <td>${new Date(ing.dataEvento).toLocaleString('pt-BR')}</td>
+                    <td><span class="badge bg-info text-dark">${ing.tipo}</span></td>
+                    <td><span class="badge ${corStatus} text-white">${ing.estado}</span></td>
+                    <td><strong>R$ ${valorFinal.toFixed(2)}</strong></td>
+                    <td>${botoesAcao}</td>
+                </tr>
+            `;
+            tbody.innerHTML += linha;
+        }
+    }
+
+    async function solicitarCancelamento(ingressoId) {
+        if (!confirm("Tem certeza que deseja cancelar este ingresso?")) return;
+
+        const usuarioId = sessionStorage.getItem("usuarioId");
+
+        const resposta = await fetch(`/ingressos/${ingressoId}/cancelar/${usuarioId}`, {
+            method: 'PUT'
+        });
+
+        if (resposta.ok) {
+            alert("Ingresso cancelado com sucesso! E-mail de confirmação enviado.");
+            carregarIngressos();
+        } else {
+            const motivoRecusa = await resposta.text();
+            alert("Não foi possível cancelar: " + motivoRecusa);
+        }
+    }
+
+    async function solicitarDevolucao(ingressoId) {
+        if (!confirm("Tem certeza que deseja devolver este ingresso e solicitar o reembolso?")) return;
+
+        const usuarioId = sessionStorage.getItem("usuarioId");
+
+        const resposta = await fetch(`/ingressos/${ingressoId}/devolver/${usuarioId}`, {
+            method: 'PUT'
+        });
+
+        if (resposta.ok) {
+            alert("Devolução aprovada! O reembolso foi processado e o e-mail enviado.");
+            carregarIngressos();
+        } else {
+            const motivoRecusa = await resposta.text();
+            alert("Não foi possível devolver: " + motivoRecusa);
+        }
+    }
+</script>
+
+</body>
+</html>
