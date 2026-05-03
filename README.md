@@ -53,5 +53,5 @@ Esta aplicação foi construída como parte dos requisitos acadêmicos do curso 
  
  
 👨‍💻 Autor
-(seu nome)
+José Armando Abrão Boer
 Bacharelando em Sistemas de Informação - Universidade Mogi das Cruzes (UMC)
