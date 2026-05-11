@@ -22,15 +22,19 @@ public class UsuarioRepository {
         return usuario;
     }
 
+    public Optional<Usuario> findById(String id) {
+        return Optional.ofNullable(usuarios.get(id));
+    }
+
     public Optional<Usuario> findByEmailAndSenha(String email, String senha) {
         return usuarios.values().stream()
-                .filter(usuario -> usuario.getEmail().equalsIgnoreCase(email))
-                .filter(usuario -> usuario.getSenha().equals(senha))
+                .filter(usuario -> usuario.getEmail() != null && usuario.getEmail().equalsIgnoreCase(email))
+                .filter(usuario -> usuario.getSenha() != null && usuario.getSenha().equals(senha))
                 .findFirst();
     }
 
     public boolean existsByEmail(String email) {
         return usuarios.values().stream()
-                .anyMatch(usuario -> usuario.getEmail().equalsIgnoreCase(email));
+                .anyMatch(usuario -> usuario.getEmail() != null && usuario.getEmail().equalsIgnoreCase(email));
     }
 }

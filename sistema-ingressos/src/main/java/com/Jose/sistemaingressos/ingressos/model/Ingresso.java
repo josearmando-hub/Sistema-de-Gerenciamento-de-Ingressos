@@ -14,10 +14,14 @@ public abstract class Ingresso {
 
     private String id;
     private String usuarioId; // <-- Aqui está a ligação com o usuário logado!
+    private String eventoId;
     private String evento;
     private LocalDateTime dataEvento;
     private double valorBase;
     private EstadoIngresso estado;
+    private String codigoQr;
+    private String qrCodeBase64;
+    private LocalDateTime dataUtilizacao;
 
     public Ingresso() {
         this.estado = EstadoIngresso.DISPONIVEL;
@@ -31,6 +35,8 @@ public abstract class Ingresso {
     public void setId(String id) { this.id = id; }
     public String getUsuarioId() { return usuarioId; }
     public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
+    public String getEventoId() { return eventoId; }
+    public void setEventoId(String eventoId) { this.eventoId = eventoId; }
     public String getEvento() { return evento; }
     public void setEvento(String evento) { this.evento = evento; }
     public LocalDateTime getDataEvento() { return dataEvento; }
@@ -39,4 +45,10 @@ public abstract class Ingresso {
     public void setValorBase(double valorBase) { this.valorBase = valorBase; }
     public EstadoIngresso getEstado() { return estado; }
     public void setEstado(EstadoIngresso estado) { this.estado = estado; }
+    public String getCodigoQr() { return codigoQr; }
+    public void setCodigoQr(String codigoQr) { this.codigoQr = codigoQr; }
+    public String getQrCodeBase64() { return qrCodeBase64; }
+    public void setQrCodeBase64(String qrCodeBase64) { this.qrCodeBase64 = qrCodeBase64; }
+    public LocalDateTime getDataUtilizacao() { return dataUtilizacao; }
+    public void setDataUtilizacao(LocalDateTime dataUtilizacao) { this.dataUtilizacao = dataUtilizacao; }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class IngressoService {
@@ -13,9 +14,13 @@ public class IngressoService {
     @Autowired
     private IngressoRepository repository;
 
+    @Autowired
+    private QrCodeService qrCodeService;
+
     public Ingresso salvar(Ingresso ingresso) {
         // Quando compra, o ingresso vai para PAGO ou EMITIDO. Vamos colocar EMITIDO direto para simplificar o fluxo.
         ingresso.setEstado(com.Jose.sistemaingressos.ingressos.model.EstadoIngresso.EMITIDO);
+        garantirQrCode(ingresso);
         System.out.println(ingresso.imprimirIngresso());
         return repository.save(ingresso);
     }
@@ -25,7 +30,11 @@ public class IngressoService {
     }
 
     public Ingresso buscarPorId(String id) {
-        return repository.findById(id).orElseThrow(() -> new RuntimeException("Ingresso não encontrado"));
+        Ingresso ingresso = repository.findById(id).orElseThrow(() -> new RuntimeException("Ingresso não encontrado"));
+        if (garantirQrCode(ingresso)) {
+            return repository.save(ingresso);
+        }
+        return ingresso;
     }
 
     public double calcularValor(String id) {
@@ -101,5 +110,18 @@ public class IngressoService {
         System.out.println("=====================================================");
 
         return ingressoDevolvido;
+    }
+
+    private boolean garantirQrCode(Ingresso ingresso) {
+        boolean alterado = false;
+        if (ingresso.getCodigoQr() == null || ingresso.getCodigoQr().isBlank()) {
+            ingresso.setCodigoQr("QR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase());
+            alterado = true;
+        }
+        if (ingresso.getQrCodeBase64() == null || ingresso.getQrCodeBase64().isBlank()) {
+            ingresso.setQrCodeBase64(qrCodeService.gerarPngBase64(ingresso.getCodigoQr()));
+            alterado = true;
+        }
+        return alterado;
     }
 }

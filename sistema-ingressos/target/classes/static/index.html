@@ -5,186 +5,248 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Ingressos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f3f5f7; }
+        .app-shell { max-width: 1180px; }
+        .qr-img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            border: 1px solid #ced4da;
+            background: white;
+            padding: 8px;
+        }
+        .table td { vertical-align: middle; }
+    </style>
 </head>
-<body class="bg-light">
-
-<!-- ================= TELA DE LOGIN / CADASTRO ================= -->
-<div class="container mt-5" id="telaLogin">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow">
+<body>
+<main class="container app-shell py-4">
+    <section id="telaLogin" class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
                 <div class="card-header bg-dark text-white text-center">
-                    <h4>Acesso ao Sistema</h4>
+                    <h4 class="mb-0">Sistema de Ingressos</h4>
                 </div>
                 <div class="card-body">
                     <form id="formAcesso">
                         <div class="mb-3">
-                            <label>E-mail</label>
+                            <label class="form-label" for="email">E-mail</label>
                             <input type="email" id="email" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label>Senha</label>
+                            <label class="form-label" for="senha">Senha</label>
                             <input type="password" id="senha" class="form-control" required>
                         </div>
-                        <div class="mb-3" id="divNome" style="display: none;">
-                            <label>Nome Completo</label>
+                        <div class="mb-3 d-none" id="divNome">
+                            <label class="form-label" for="nome">Nome completo</label>
                             <input type="text" id="nome" class="form-control">
                         </div>
-
+                        <div class="mb-3 d-none" id="divPerfil">
+                            <label class="form-label" for="perfil">Perfil</label>
+                            <select id="perfil" class="form-select">
+                                <option value="CLIENTE">Cliente</option>
+                                <option value="ADMIN">Administrador</option>
+                            </select>
+                        </div>
                         <div class="d-grid gap-2">
                             <button type="button" class="btn btn-primary" id="btnLogin" onclick="fazerLogin()">Entrar</button>
-                            <button type="button" class="btn btn-outline-success" id="btnCadastrar" onclick="mostrarCadastro()">Criar Conta</button>
+                            <button type="button" class="btn btn-outline-success" id="btnCadastrar" onclick="mostrarCadastro()">Criar conta</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- ================= TELA DO SISTEMA ================= -->
-<div class="container mt-4" id="telaSistema" style="display: none;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>🎫 Sistema de Venda de Ingressos</h2>
-        <div>
-            <span class="me-3">Olá, <strong id="nomeUsuarioLogado"></strong>!</span>
+    <section id="telaSistema" class="d-none">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h2 class="mb-1">Sistema de Ingressos</h2>
+                <span class="text-muted">Olá, <strong id="nomeUsuarioLogado"></strong></span>
+            </div>
             <button class="btn btn-sm btn-danger" onclick="sair()">Sair</button>
         </div>
-    </div>
 
-    <!-- Formulário de Compra -->
-    <div class="card shadow-sm mb-5">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Comprar Novo Ingresso</h5>
-        </div>
-        <div class="card-body">
-            <form id="formIngresso">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Nome do Evento</label>
-                        <input type="text" id="evento" class="form-control" required>
+        <ul class="nav nav-tabs mb-4" id="abasSistema">
+            <li class="nav-item">
+                <button class="nav-link active" id="abaCliente" onclick="mostrarAba('cliente')">Área do cliente</button>
+            </li>
+            <li class="nav-item" id="itemAdmin">
+                <button class="nav-link" id="abaAdmin" onclick="mostrarAba('admin')">Administração</button>
+            </li>
+        </ul>
+
+        <div id="areaCliente">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Catálogo de eventos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="catalogoEventos" class="row g-3"></div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label>Data e Hora</label>
-                        <input type="datetime-local" id="dataEvento" class="form-control" required>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Meus ingressos</h5>
+                            <button class="btn btn-sm btn-light" onclick="carregarReservas()">Atualizar</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="listaReservas" class="vstack gap-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="areaAdmin" class="d-none">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">Cadastrar evento</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="formEvento" class="vstack gap-3">
+                                <input id="eventoNome" class="form-control" placeholder="Nome do evento" required>
+                                <textarea id="eventoDescricao" class="form-control" rows="3" placeholder="Descrição" required></textarea>
+                                <input id="eventoDataHora" class="form-control" type="datetime-local" required>
+                                <input id="eventoLocal" class="form-control" placeholder="Local" required>
+                                <div class="row g-2">
+                                    <div class="col">
+                                        <input id="eventoQuantidade" class="form-control" type="number" min="0" placeholder="Ingressos" required>
+                                    </div>
+                                    <div class="col">
+                                        <input id="eventoValor" class="form-control" type="number" min="0.01" step="0.01" placeholder="Valor" required>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-success" onclick="cadastrarEvento()">Salvar evento</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label>Valor Base (R$)</label>
-                        <input type="number" id="valorBase" class="form-control" step="0.01" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label>Tipo de Ingresso</label>
-                        <select id="tipo" class="form-select" onchange="mudarCamposDinamicos()">
-                            <option value="NORMAL">Normal</option>
-                            <option value="VIP">VIP</option>
-                            <option value="MEIA">Meia-Entrada</option>
-                        </select>
+                <div class="col-lg-7">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Controle por QR Code</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input id="codigoQrAdmin" class="form-control" placeholder="Digite ou leia o código do QR">
+                                <button class="btn btn-outline-primary" onclick="verificarQr()">Verificar</button>
+                                <button class="btn btn-primary" onclick="utilizarQr()">Marcar utilizado</button>
+                            </div>
+                            <div id="resultadoQr" class="alert alert-light border mb-0">Nenhum QR verificado.</div>
+                        </div>
                     </div>
 
-                    <!-- Campos que aparecem de acordo com o Polimorfismo -->
-                    <div class="col-md-4" id="divTaxaVIP" style="display: none;">
-                        <label>Taxa VIP (R$)</label>
-                        <input type="number" id="taxaVIP" class="form-control" step="0.01">
-                    </div>
-                    <div class="col-md-4" id="divDescontoMeia" style="display: none;">
-                        <label>Desconto (%)</label>
-                        <input type="number" id="percentualDesconto" class="form-control" step="0.01">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Ingressos e relatório por evento</h5>
+                        </div>
+                        <div class="card-body">
+                            <select id="selectEventoAdmin" class="form-select mb-3" onchange="carregarPainelAdmin()"></select>
+                            <div id="relatorioEvento" class="row g-2 mb-3"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Evento</th>
+                                        <th>Cliente</th>
+                                        <th>Status</th>
+                                        <th>QR</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tabelaIngressosAdmin"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <button type="button" class="btn btn-success" onclick="cadastrarIngresso()">Confirmar Compra</button>
-            </form>
+            </div>
         </div>
-    </div>
-
-    <!-- Lista de Meus Ingressos -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Meus Ingressos</h5>
-            <button class="btn btn-sm btn-light" onclick="carregarIngressos()">Atualizar Lista</button>
-        </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Evento</th>
-                    <th>Data</th>
-                    <th>Tipo</th>
-                    <th>Status</th>
-                    <th>Valor Final</th>
-                    <th>Ações</th>
-                </tr>
-                </thead>
-                <tbody id="tabelaIngressos">
-                <!-- Os ingressos aparecerão aqui -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    </section>
+</main>
 
 <script>
-    // ==========================================
-    // ===== LÓGICA DE AUTENTICAÇÃO (LOGIN) =====
-    // ==========================================
     let isCadastro = false;
 
     function mostrarCadastro() {
         if (!isCadastro) {
-            document.getElementById("divNome").style.display = "block";
-            document.getElementById("btnLogin").style.display = "none";
-            document.getElementById("btnCadastrar").innerText = "Confirmar Cadastro";
+            document.getElementById("divNome").classList.remove("d-none");
+            document.getElementById("divPerfil").classList.remove("d-none");
+            document.getElementById("btnLogin").classList.add("d-none");
+            document.getElementById("btnCadastrar").textContent = "Confirmar cadastro";
             document.getElementById("btnCadastrar").classList.replace("btn-outline-success", "btn-success");
             isCadastro = true;
-        } else {
-            registrarUsuario();
+            return;
         }
+        registrarUsuario();
     }
 
     async function registrarUsuario() {
         const usuario = {
-            email: document.getElementById("email").value.trim(),
-            senha: document.getElementById("senha").value,
-            nome: document.getElementById("nome").value.trim()
+            email: valor("email"),
+            senha: valor("senha"),
+            nome: valor("nome"),
+            perfil: valor("perfil")
         };
 
-        const res = await fetch('/usuarios/cadastrar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/usuarios/cadastrar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(usuario)
         });
 
         if (res.ok) {
-            alert("Cadastro realizado com sucesso! Agora faça o login.");
+            alert("Cadastro realizado. Entre com seu e-mail e senha.");
             window.location.reload();
-        } else {
-            alert(await res.text());
+            return;
         }
+        alert(await res.text());
     }
 
     async function fazerLogin() {
-        const credenciais = {
-            email: document.getElementById("email").value.trim(),
-            senha: document.getElementById("senha").value
-        };
-
-        const res = await fetch('/usuarios/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credenciais)
+        const res = await fetch("/usuarios/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: valor("email"), senha: valor("senha") })
         });
 
-        if (res.ok) {
-            const usuarioLogado = await res.json();
-            sessionStorage.setItem("usuarioId", usuarioLogado.id);
-            sessionStorage.setItem("usuarioNome", usuarioLogado.nome);
-            iniciarSistema();
-        } else {
+        if (!res.ok) {
             alert(await res.text());
+            return;
         }
+
+        const usuario = await res.json();
+        sessionStorage.setItem("usuarioId", usuario.id);
+        sessionStorage.setItem("usuarioNome", usuario.nome);
+        sessionStorage.setItem("usuarioPerfil", usuario.perfil || "CLIENTE");
+        iniciarSistema();
+    }
+
+    function iniciarSistema() {
+        document.getElementById("telaLogin").classList.add("d-none");
+        document.getElementById("telaSistema").classList.remove("d-none");
+        document.getElementById("nomeUsuarioLogado").textContent = sessionStorage.getItem("usuarioNome");
+
+        const isAdmin = sessionStorage.getItem("usuarioPerfil") === "ADMIN";
+        document.getElementById("itemAdmin").classList.toggle("d-none", !isAdmin);
+        mostrarAba("cliente");
+        carregarEventos();
+        carregarReservas();
+        if (isAdmin) carregarEventosAdmin();
+    }
+
+    function mostrarAba(aba) {
+        document.getElementById("areaCliente").classList.toggle("d-none", aba !== "cliente");
+        document.getElementById("areaAdmin").classList.toggle("d-none", aba !== "admin");
+        document.getElementById("abaCliente").classList.toggle("active", aba === "cliente");
+        document.getElementById("abaAdmin").classList.toggle("active", aba === "admin");
     }
 
     function sair() {
@@ -192,136 +254,283 @@
         window.location.reload();
     }
 
-    function iniciarSistema() {
-        document.getElementById("telaLogin").style.display = "none";
-        document.getElementById("telaSistema").style.display = "block";
-        document.getElementById("nomeUsuarioLogado").innerText = sessionStorage.getItem("usuarioNome");
-        carregarIngressos();
+    async function carregarEventos() {
+        const res = await fetch("/eventos");
+        const eventos = await res.json();
+        const container = document.getElementById("catalogoEventos");
+        container.textContent = "";
+
+        if (eventos.length === 0) {
+            container.appendChild(textoVazio("Nenhum evento cadastrado."));
+            return;
+        }
+
+        eventos.forEach(evento => {
+            const card = document.createElement("div");
+            card.className = "col-md-6";
+            card.innerHTML = `
+                <div class="border rounded p-3 h-100 bg-white">
+                    <h5></h5>
+                    <p class="text-muted small mb-2"></p>
+                    <div class="small mb-1"><strong>Data:</strong> <span></span></div>
+                    <div class="small mb-1"><strong>Local:</strong> <span></span></div>
+                    <div class="small mb-1"><strong>Disponíveis:</strong> <span></span></div>
+                    <div class="fw-bold mb-3"></div>
+                    <div class="input-group input-group-sm">
+                        <select class="form-select">
+                            <option value="NORMAL">Normal</option>
+                            <option value="VIP">VIP</option>
+                            <option value="MEIA">Meia-entrada</option>
+                        </select>
+                        <button class="btn btn-primary">Reservar</button>
+                    </div>
+                </div>
+            `;
+
+            const spans = card.querySelectorAll("span");
+            card.querySelector("h5").textContent = evento.nome;
+            card.querySelector("p").textContent = evento.descricao;
+            spans[0].textContent = formatarData(evento.dataHora);
+            spans[1].textContent = evento.local;
+            spans[2].textContent = evento.quantidadeIngressosDisponiveis;
+            card.querySelector(".fw-bold").textContent = dinheiro(evento.valorIngresso);
+            card.querySelector("button").disabled = evento.quantidadeIngressosDisponiveis <= 0;
+            card.querySelector("button").onclick = () => reservarEvento(evento.id, card.querySelector("select").value);
+            container.appendChild(card);
+        });
+    }
+
+    async function reservarEvento(eventoId, tipoIngresso) {
+        const res = await fetch("/reservas", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                clienteId: sessionStorage.getItem("usuarioId"),
+                eventoId,
+                tipoIngresso
+            })
+        });
+
+        if (!res.ok) {
+            alert(await res.text());
+            return;
+        }
+
+        alert("Reserva realizada. Seu QR Code já está disponível.");
+        carregarEventos();
+        carregarReservas();
+        carregarEventosAdmin();
+    }
+
+    async function carregarReservas() {
+        const clienteId = sessionStorage.getItem("usuarioId");
+        const res = await fetch(`/reservas/cliente/${clienteId}`);
+        const reservas = await res.json();
+        const lista = document.getElementById("listaReservas");
+        lista.textContent = "";
+
+        if (reservas.length === 0) {
+            lista.appendChild(textoVazio("Você ainda não possui ingressos."));
+            return;
+        }
+
+        for (const reserva of reservas) {
+            const ingresso = await buscarJson(`/ingressos/${reserva.ingressoId}`);
+            const item = document.createElement("div");
+            item.className = "border rounded p-3 bg-white";
+
+            const titulo = document.createElement("h6");
+            titulo.textContent = ingresso.evento;
+
+            const detalhes = document.createElement("div");
+            detalhes.className = "small text-muted mb-2";
+            detalhes.textContent = `${formatarData(ingresso.dataEvento)} | Status: ${reserva.status} | Ingresso: ${ingresso.estado}`;
+
+            const valorFinal = document.createElement("div");
+            valorFinal.className = "fw-bold mb-2";
+            valorFinal.textContent = `Valor final: ${dinheiro(await buscarJson(`/ingressos/${ingresso.id}/valor`))}`;
+
+            const codigo = document.createElement("code");
+            codigo.textContent = ingresso.codigoQr;
+
+            const qr = document.createElement("img");
+            qr.className = "qr-img d-block my-2";
+            qr.alt = `QR Code do ingresso ${ingresso.codigoQr}`;
+            qr.src = ingresso.qrCodeBase64 || "";
+
+            const botao = document.createElement("button");
+            botao.className = "btn btn-sm btn-outline-danger";
+            botao.textContent = "Cancelar reserva";
+            botao.disabled = reserva.status === "CANCELADA" || reserva.status === "UTILIZADA";
+            botao.onclick = () => cancelarReserva(reserva.id);
+
+            item.append(titulo, detalhes, valorFinal, codigo, qr, botao);
+            lista.appendChild(item);
+        }
+    }
+
+    async function cancelarReserva(reservaId) {
+        if (!confirm("Cancelar esta reserva?")) return;
+        const clienteId = sessionStorage.getItem("usuarioId");
+        const res = await fetch(`/reservas/${reservaId}/cancelar/${clienteId}`, { method: "PUT" });
+        if (!res.ok) {
+            alert(await res.text());
+            return;
+        }
+        carregarEventos();
+        carregarReservas();
+        carregarPainelAdmin();
+    }
+
+    async function cadastrarEvento() {
+        const evento = {
+            nome: valor("eventoNome"),
+            descricao: valor("eventoDescricao"),
+            dataHora: valor("eventoDataHora"),
+            local: valor("eventoLocal"),
+            quantidadeIngressosDisponiveis: Number(valor("eventoQuantidade")),
+            valorIngresso: Number(valor("eventoValor")),
+            ativo: true
+        };
+
+        const res = await fetch("/eventos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(evento)
+        });
+
+        if (!res.ok) {
+            alert(await res.text());
+            return;
+        }
+
+        document.getElementById("formEvento").reset();
+        carregarEventos();
+        carregarEventosAdmin();
+    }
+
+    async function carregarEventosAdmin() {
+        if (sessionStorage.getItem("usuarioPerfil") !== "ADMIN") return;
+        const eventos = await buscarJson("/eventos/admin");
+        const select = document.getElementById("selectEventoAdmin");
+        const selecionado = select.value;
+        select.textContent = "";
+
+        eventos.forEach(evento => {
+            const option = document.createElement("option");
+            option.value = evento.id;
+            option.textContent = evento.nome;
+            select.appendChild(option);
+        });
+
+        if (selecionado) select.value = selecionado;
+        carregarPainelAdmin();
+    }
+
+    async function carregarPainelAdmin() {
+        const eventoId = document.getElementById("selectEventoAdmin").value;
+        if (!eventoId) return;
+
+        const relatorio = await buscarJson(`/admin/eventos/${eventoId}/relatorio`);
+        const ingressos = await buscarJson(`/admin/eventos/${eventoId}/ingressos`);
+        desenharRelatorio(relatorio);
+        desenharIngressosAdmin(ingressos);
+    }
+
+    function desenharRelatorio(relatorio) {
+        const campos = [
+            ["Reservados", relatorio.reservados],
+            ["Confirmados", relatorio.confirmados],
+            ["Utilizados", relatorio.utilizados],
+            ["Cancelados", relatorio.cancelados],
+            ["Disponíveis", relatorio.disponiveis]
+        ];
+        const container = document.getElementById("relatorioEvento");
+        container.textContent = "";
+        campos.forEach(([label, valorCampo]) => {
+            const div = document.createElement("div");
+            div.className = "col";
+            div.innerHTML = `<div class="border rounded bg-white p-2 text-center"><div class="small text-muted"></div><strong></strong></div>`;
+            div.querySelector(".small").textContent = label;
+            div.querySelector("strong").textContent = valorCampo;
+            container.appendChild(div);
+        });
+    }
+
+    function desenharIngressosAdmin(ingressos) {
+        const tbody = document.getElementById("tabelaIngressosAdmin");
+        tbody.textContent = "";
+        ingressos.forEach(ingresso => {
+            const tr = document.createElement("tr");
+            [ingresso.evento, ingresso.usuarioId, ingresso.estado, ingresso.codigoQr].forEach(valorCampo => {
+                const td = document.createElement("td");
+                td.textContent = valorCampo || "-";
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function verificarQr() {
+        const codigo = valor("codigoQrAdmin");
+        const res = await fetch(`/admin/qrcode/${encodeURIComponent(codigo)}`);
+        const box = document.getElementById("resultadoQr");
+        if (!res.ok) {
+            box.className = "alert alert-danger mb-0";
+            box.textContent = await res.text();
+            return;
+        }
+
+        const ingresso = await res.json();
+        box.className = "alert alert-info mb-0";
+        box.textContent = `Ingresso válido para ${ingresso.evento}. Status atual: ${ingresso.estado}.`;
+    }
+
+    async function utilizarQr() {
+        const codigo = valor("codigoQrAdmin");
+        const res = await fetch(`/admin/qrcode/${encodeURIComponent(codigo)}/utilizar`, { method: "PUT" });
+        const box = document.getElementById("resultadoQr");
+        if (!res.ok) {
+            box.className = "alert alert-danger mb-0";
+            box.textContent = await res.text();
+            return;
+        }
+
+        const ingresso = await res.json();
+        box.className = "alert alert-success mb-0";
+        box.textContent = `Entrada liberada para ${ingresso.evento}. Ingresso marcado como UTILIZADO.`;
+        carregarPainelAdmin();
+        carregarReservas();
+    }
+
+    async function buscarJson(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    }
+
+    function textoVazio(texto) {
+        const div = document.createElement("div");
+        div.className = "text-muted";
+        div.textContent = texto;
+        return div;
+    }
+
+    function valor(id) {
+        return document.getElementById(id).value.trim();
+    }
+
+    function formatarData(data) {
+        return data ? new Date(data).toLocaleString("pt-BR") : "-";
+    }
+
+    function dinheiro(valorNumero) {
+        return Number(valorNumero || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     }
 
     window.onload = () => {
-        if (sessionStorage.getItem("usuarioId")) {
-            iniciarSistema();
-        }
+        if (sessionStorage.getItem("usuarioId")) iniciarSistema();
     };
-
-    // ==========================================
-    // ===== LÓGICA DE INGRESSOS (CRUD) =========
-    // ==========================================
-    function mudarCamposDinamicos() {
-        const tipo = document.getElementById("tipo").value;
-        document.getElementById("divTaxaVIP").style.display = tipo === "VIP" ? "block" : "none";
-        document.getElementById("divDescontoMeia").style.display = tipo === "MEIA" ? "block" : "none";
-    }
-
-    async function cadastrarIngresso() {
-        const tipo = document.getElementById("tipo").value;
-
-        const ingresso = {
-            usuarioId: sessionStorage.getItem("usuarioId"),
-            tipo: tipo,
-            evento: document.getElementById("evento").value,
-            dataEvento: document.getElementById("dataEvento").value,
-            valorBase: parseFloat(document.getElementById("valorBase").value)
-        };
-
-        if (tipo === "VIP") ingresso.taxaVIP = parseFloat(document.getElementById("taxaVIP").value || 0);
-        if (tipo === "MEIA") ingresso.percentualDesconto = parseFloat(document.getElementById("percentualDesconto").value || 0);
-
-        const resposta = await fetch('/ingressos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ingresso)
-        });
-
-        if (resposta.ok) {
-            alert("Ingresso comprado com sucesso!");
-            document.getElementById("formIngresso").reset();
-            mudarCamposDinamicos();
-            carregarIngressos();
-        } else {
-            alert("Erro ao comprar ingresso.");
-        }
-    }
-
-    async function carregarIngressos() {
-        const usuarioId = sessionStorage.getItem("usuarioId");
-
-        const resposta = await fetch(`/ingressos/usuario/${usuarioId}`);
-        const ingressos = await resposta.json();
-
-        const tbody = document.getElementById("tabelaIngressos");
-        tbody.innerHTML = "";
-
-        for (const ing of ingressos) {
-            const respostaValor = await fetch(`/ingressos/${ing.id}/valor`);
-            const valorFinal = await respostaValor.json();
-
-            // Lógica para desenhar os botões de Cancelar e Devolver
-            let botoesAcao = "";
-            if (ing.estado !== "CANCELADO" && ing.estado !== "DEVOLVIDO") {
-                botoesAcao = `
-                    <button class="btn btn-sm btn-outline-danger me-1" onclick="solicitarCancelamento('${ing.id}')">Cancelar</button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="solicitarDevolucao('${ing.id}')">Devolver</button>
-                `;
-            }
-
-            // Lógica para colorir a tag de Status
-            let corStatus = "bg-success";
-            if (ing.estado === "CANCELADO") corStatus = "bg-danger";
-            if (ing.estado === "DEVOLVIDO") corStatus = "bg-secondary";
-            if (ing.estado === "EMITIDO" || ing.estado === "PAGO") corStatus = "bg-success";
-
-            const linha = `
-                <tr>
-                    <td>${ing.evento}</td>
-                    <td>${new Date(ing.dataEvento).toLocaleString('pt-BR')}</td>
-                    <td><span class="badge bg-info text-dark">${ing.tipo}</span></td>
-                    <td><span class="badge ${corStatus} text-white">${ing.estado}</span></td>
-                    <td><strong>R$ ${valorFinal.toFixed(2)}</strong></td>
-                    <td>${botoesAcao}</td>
-                </tr>
-            `;
-            tbody.innerHTML += linha;
-        }
-    }
-
-    async function solicitarCancelamento(ingressoId) {
-        if (!confirm("Tem certeza que deseja cancelar este ingresso?")) return;
-
-        const usuarioId = sessionStorage.getItem("usuarioId");
-
-        const resposta = await fetch(`/ingressos/${ingressoId}/cancelar/${usuarioId}`, {
-            method: 'PUT'
-        });
-
-        if (resposta.ok) {
-            alert("Ingresso cancelado com sucesso! E-mail de confirmação enviado.");
-            carregarIngressos();
-        } else {
-            const motivoRecusa = await resposta.text();
-            alert("Não foi possível cancelar: " + motivoRecusa);
-        }
-    }
-
-    async function solicitarDevolucao(ingressoId) {
-        if (!confirm("Tem certeza que deseja devolver este ingresso e solicitar o reembolso?")) return;
-
-        const usuarioId = sessionStorage.getItem("usuarioId");
-
-        const resposta = await fetch(`/ingressos/${ingressoId}/devolver/${usuarioId}`, {
-            method: 'PUT'
-        });
-
-        if (resposta.ok) {
-            alert("Devolução aprovada! O reembolso foi processado e o e-mail enviado.");
-            carregarIngressos();
-        } else {
-            const motivoRecusa = await resposta.text();
-            alert("Não foi possível devolver: " + motivoRecusa);
-        }
-    }
 </script>
-
 </body>
 </html>
