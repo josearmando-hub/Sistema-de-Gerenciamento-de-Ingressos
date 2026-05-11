@@ -1,6 +1,7 @@
 <img width="1303" height="811" alt="image" src="https://github.com/user-attachments/assets/ae0f05c2-45e0-4311-9a97-fc26f8f6c295" />
 <img width="781" height="683" alt="imagem (1)" src="https://github.com/user-attachments/assets/796d208d-c57b-4121-af23-bf3d8508396e" />
 <img width="1024" height="682" alt="Diagrama Jose" src="https://github.com/user-attachments/assets/a63ec402-0734-460d-9832-8c0d29c5fdfb" />
+<img width="896" height="791" alt="Captura de tela 2026-05-11 003642" src="https://github.com/user-attachments/assets/4e076b6d-2a69-4383-9ddb-380145ebfbb1" />
 
 Sistema Web de Gestão de Ingressos
 Um sistema web completo (Full-Stack) para venda, cancelamento e devolução de ingressos, desenvolvido com foco na aplicação prática de conceitos avançados de Programação Orientada a Objetos (POO), como Herança e Polimorfismo.
